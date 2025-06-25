@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Joystick Visualization</title>
+  <style>
+    canvas { background-color: #1e1e1e; display: block; margin: auto; }
+    #connectBtn { display: block; margin: 10px auto; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <button id="connectBtn">Connect Serial</button>
+  <canvas id="joystickCanvas" width="400" height="400"></canvas>
+  <div id="serialMsg" style="color: #000; text-align: center; margin-top: 10px; font-size: 18px;">Incoming: <span id="serialIncome"></span></div>
+
+  <script>
+    const canvas = document.getElementById('joystickCanvas');
+    const ctx = canvas.getContext('2d');
+    let port, writer, reader;
+    let pollInterval = null;
+
+    async function connectSerial() {
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+
+        writer = port.writable.getWriter();
+        reader = port.readable.getReader();
+        console.log("Serial connected");
+        readSerial();
+      } catch (err) {
+        alert("Serial connection failed: " + err);
+      }
+    }
+
+    document.getElementById("connectBtn").addEventListener("click", connectSerial);
+
+    function drawJoystick(state) {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      ctx.fillStyle = '#1e1e1e';
+      ctx.fillRect(0, 0, width, height);
+
+      const [lx, ly, rx, ry] = state.axes;
+
+      const drawStick = (cx, cy, dx, dy, color) => {
+        const x = cx + dx * (width / 6);
+        const y = cy + dy * (height / 3);
+        ctx.strokeStyle = '#aaa';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+      };
+
+      drawStick(width / 4, height / 2, lx, ly, '#0080ff');
+      drawStick(3 * width / 4, height / 2, rx, ry, '#ff8000');
+
+      state.buttons.forEach((pressed, i) => {
+        ctx.fillStyle = pressed ? '#00c000' : '#666';
+        ctx.fillRect(40 + i * 40, height - 40, 30, 30);
+      });
+    }
+
+    async function pollGamepad() {
+      const gamepads = navigator.getGamepads();
+      if (!gamepads[0]) return;
+
+      const gp = gamepads[0];
+      const state = {
+        axes: gp.axes.slice(0, 4),
+        buttons: gp.buttons.map(b => b.pressed)
+      };
+
+      drawJoystick(state);
+
+      if (writer) {
+        const axesStr = state.axes.map(v => v.toFixed(2)).join(',');
+        const buttonsStr = state.buttons.map(b => b ? 1 : 0).join(',');
+        const msg = `${axesStr},${buttonsStr}\n`;
+        const data = new TextEncoder().encode(msg);
+        //console.log(msg);
+        await writer.write(data);
+      }
+    }
+
+    async function readSerial() {
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (port && reader) {
+        try {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) {
+            buffer += decoder.decode(value);
+            let idx;
+            while ((idx = buffer.indexOf('\n')) !== -1) {
+              const msg = buffer.slice(0, idx);
+              document.getElementById('serialIncome').textContent = msg;
+              console.log('Received:', msg);
+              buffer = buffer.slice(idx + 1);
+            }
+          }
+        } catch (err) {
+          console.error('Read error:', err);
+          break;
+        }
+      }
+    }
+
+    window.addEventListener("gamepadconnected", () => {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(pollGamepad, 50); // 50Hz
+    });
+
+    window.addEventListener("gamepaddisconnected", () => {
+      if (pollInterval) clearInterval(pollInterval);
+    });
+  </script>
+</body>
+</html>
