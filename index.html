@@ -2,17 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Joystick Visualization</title>
+  <title>Picker Joystick Control</title>
+  <link rel="icon" href="assets/logo-blau-robotics.ico" />
   <style>
     canvas { background-color: #1e1e1e; display: block; margin: auto; }
     #connectBtn { display: block; margin: 10px auto; font-size: 16px; }
+    li {
+	padding: 0;
+	list-style: none;
+  display: inline;
+  margin-bottom: 10px; 
+}
   </style>
 </head>
 <body>
+  <li><img fetchpriority="high" sizes="398px" srcset="https://static.wixstatic.com/media/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png/v1/fill/w_398,h_129,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png 1x, https://static.wixstatic.com/media/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png/v1/fill/w_796,h_258,al_c,lg_1,q_85,enc_avif,quality_auto/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png 2x" id="img_comp-m9v1z91x" src="https://static.wixstatic.com/media/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png/v1/fill/w_398,h_129,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png" alt="Picker_transparent-BG.png"  style="display: block; margin: auto;"></li>
+  <br>
   <button id="connectBtn">Connect Serial</button>
   <canvas id="joystickCanvas" width="400" height="400"></canvas>
   <div id="serialMsg" style="color: #000; text-align: center; margin-top: 10px; font-size: 18px;">Incoming: <span id="serialIncome"></span></div>
-
+  <br><br><li><img width="400" src="./assets/logo-title.svg" alt="Blau Robotics" style="display: block; margin: auto;"></li>
   <script>
     const canvas = document.getElementById('joystickCanvas');
     const ctx = canvas.getContext('2d');
