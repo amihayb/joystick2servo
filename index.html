@@ -1,135 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Picker Joystick Control</title>
-  <link rel="icon" href="assets/logo-blau-robotics.ico" />
-  <style>
-    canvas { background-color: #1e1e1e; display: block; margin: auto; }
-    #connectBtn { display: block; margin: 10px auto; font-size: 16px; }
-    li {
-	padding: 0;
-	list-style: none;
-  display: inline;
-  margin-bottom: 10px; 
-}
-  </style>
-</head>
-<body>
-  <li><img fetchpriority="high" sizes="398px" srcset="https://static.wixstatic.com/media/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png/v1/fill/w_398,h_129,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png 1x, https://static.wixstatic.com/media/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png/v1/fill/w_796,h_258,al_c,lg_1,q_85,enc_avif,quality_auto/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png 2x" id="img_comp-m9v1z91x" src="https://static.wixstatic.com/media/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png/v1/fill/w_398,h_129,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/3951dd_725eb1241c714bd3ac79c0776810fa19~mv2.png" alt="Picker_transparent-BG.png"  style="display: block; margin: auto;"></li>
-  <br>
-  <button id="connectBtn">Connect Serial</button>
-  <canvas id="joystickCanvas" width="400" height="400"></canvas>
-  <div id="serialMsg" style="color: #000; text-align: center; margin-top: 10px; font-size: 18px;">Incoming: <span id="serialIncome"></span></div>
-  <br><br><li><img width="400" src="./assets/logo-title.svg" alt="Blau Robotics" style="display: block; margin: auto;"></li>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joystick to Arduino</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MZ5Y2X9HPK"></script>
   <script>
-    const canvas = document.getElementById('joystickCanvas');
-    const ctx = canvas.getContext('2d');
-    let port, writer, reader;
-    let pollInterval = null;
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-    async function connectSerial() {
-      try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-
-        writer = port.writable.getWriter();
-        reader = port.readable.getReader();
-        console.log("Serial connected");
-        readSerial();
-      } catch (err) {
-        alert("Serial connection failed: " + err);
-      }
-    }
-
-    document.getElementById("connectBtn").addEventListener("click", connectSerial);
-
-    function drawJoystick(state) {
-      const width = canvas.width;
-      const height = canvas.height;
-
-      ctx.fillStyle = '#1e1e1e';
-      ctx.fillRect(0, 0, width, height);
-
-      const [lx, ly, rx, ry] = state.axes;
-
-      const drawStick = (cx, cy, dx, dy, color) => {
-        const x = cx + dx * (width / 6);
-        const y = cy + dy * (height / 3);
-        ctx.strokeStyle = '#aaa';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(x, y, 20, 0, 2 * Math.PI);
-        ctx.fill();
-      };
-
-      drawStick(width / 4, height / 2, lx, ly, '#0080ff');
-      drawStick(3 * width / 4, height / 2, rx, ry, '#ff8000');
-
-      state.buttons.forEach((pressed, i) => {
-        ctx.fillStyle = pressed ? '#00c000' : '#666';
-        ctx.fillRect(40 + i * 40, height - 40, 30, 30);
-      });
-    }
-
-    async function pollGamepad() {
-      const gamepads = navigator.getGamepads();
-      if (!gamepads[0]) return;
-
-      const gp = gamepads[0];
-      const state = {
-        axes: gp.axes.slice(0, 4),
-        buttons: gp.buttons.map(b => b.pressed)
-      };
-
-      drawJoystick(state);
-
-      if (writer) {
-        const axesStr = state.axes.map(v => v.toFixed(2)).join(',');
-        const buttonsStr = state.buttons.map(b => b ? 1 : 0).join(',');
-        const msg = `${axesStr},${buttonsStr}\n`;
-        const data = new TextEncoder().encode(msg);
-        //console.log(msg);
-        await writer.write(data);
-      }
-    }
-
-    async function readSerial() {
-      const decoder = new TextDecoder();
-      let buffer = '';
-      while (port && reader) {
-        try {
-          const { value, done } = await reader.read();
-          if (done) break;
-          if (value) {
-            buffer += decoder.decode(value);
-            let idx;
-            while ((idx = buffer.indexOf('\n')) !== -1) {
-              const msg = buffer.slice(0, idx);
-              document.getElementById('serialIncome').textContent = msg;
-              console.log('Received:', msg);
-              buffer = buffer.slice(idx + 1);
-            }
-          }
-        } catch (err) {
-          console.error('Read error:', err);
-          break;
-        }
-      }
-    }
-
-    window.addEventListener("gamepadconnected", () => {
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(pollGamepad, 50); // 50Hz
-    });
-
-    window.addEventListener("gamepaddisconnected", () => {
-      if (pollInterval) clearInterval(pollInterval);
-    });
+    gtag('config', 'G-MZ5Y2X9HPK');
   </script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="StyleSheet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="assets/logo-blau-robotics.ico">
+  <link rel="icon" href="assets/logo-blau-robotics.ico">
+</head>
+
+<body>
+  <!-- Top Navigation -->
+  <nav class="topnav" id="topnav">
+    <img src="assets/Picker.avif" alt="Rafael logo" class="headImg" onclick="window.location.href=''">
+    
+    <div class="nav-center">
+      <span class="file-upload">
+        <i class="fa fa-folder-open" title="Open File"></i>
+        <input id="file-selector" type="file">
+      </span>
+      
+      <a onclick="export2csv()" title="Export to CSV">
+        <i class="fa fa-save"></i>
+      </a>
+      
+      <a onclick="openLimitsModal()" title="Set Limits">
+        <i class="fa fa-arrows"></i>
+      </a>
+      
+      <a onclick="about()" title="About">
+        <i class="fa fa-info-circle"></i>
+      </a>
+    </div>
+    
+    <img onclick="about()" 
+         height="36" 
+         src="assets/logo-title.svg" 
+         alt="Blau Robotics" 
+         id="LogoBlau">
+  </nav>
+
+  <!-- Side Navigation -->
+  <nav class="sidenav" id="sidenav">
+    <a href="#" class="button" onclick="connectSerial()">Connect Serial</a>
+    <a href="#" class="button" onclick="console.log('Motor Control')">Motors Control</a>
+    <a href="#" class="button" onclick="console.log('Joints Control')">Joints Control</a>
+    <a href="#" class="button" onclick="console.log('Motor Control')">Record</a>
+    
+    <div id="xaxis_dropdown"></div>
+    <div class="checkboxesPlace" id="checkboxesPlace"></div>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="explenation_text">
+    <h2 id="joystickTitle">Joystick to Arduino</h2>
+    
+    <div class="joystick-visualizer">
+      <div class="stick-container stick-left">
+        <h3>Left Stick</h3><br>
+        <div class="stick-position" id="leftStick"></div>
+        <br><p>X: <span id="leftStickX">0.00</span>, Y: <span id="leftStickY">0.00</span></p>
+      </div>
+      <div class="stick-container stick-right">
+        <h3>Right Stick</h3><br>
+        <div class="stick-position" id="rightStick"></div>
+        <br><p>X: <span id="rightStickX">0.00</span>, Y: <span id="rightStickY">0.00</span></p>
+      </div>
+    </div>
+    
+    <div class="button-status">
+      <h3>Button Status</h3>
+      <div id="buttonDisplay">
+        <p>No gamepad connected.</p>
+      </div>
+    </div>
+    
+    <div id="serialMsg">
+      Incoming: <span id="serialIncome"></span>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
 </body>
+
 </html>
