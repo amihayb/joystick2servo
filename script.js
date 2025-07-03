@@ -12,6 +12,15 @@ const rightStickXDisplay = document.getElementById('rightStickX');
 const rightStickYDisplay = document.getElementById('rightStickY');
 const buttonDisplay = document.getElementById('buttonDisplay');
 
+function about(){
+  //alert('For support, contact me:\n\nAmihay Blau\nmail: amihay@blaurobotics.co.il\nPhone: +972-54-6668902');
+  Swal.fire({
+    title: "Joystick to Arduino",
+    html: "For support, contact me:<br><br> Amihay Blau <br> mail: amihay@blaurobotics.co.il <br> Phone: +972-54-6668902",
+    icon: "info"
+  });
+}
+
 // ===== SERIAL COMMUNICATION =====
 async function connectSerial() {
   try {
@@ -166,10 +175,6 @@ function export2csv() {
 
 function openLimitsModal() {
   console.log("Open limits modal functionality not implemented");
-}
-
-function about() {
-  console.log("About functionality not implemented");
 }
 
 // ===== MOTION STATE BUTTON HANDLERS =====
