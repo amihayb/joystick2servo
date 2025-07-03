@@ -46,6 +46,12 @@ span {
   background-color: #659f50;
 }
 
+.button.active-mode {
+  background-color: #078f02 !important;
+  color: #202124 !important;
+  box-shadow: 0 0 8px #078f02;
+}
+
 /* ===== TOP NAVIGATION ===== */
 .topnav {
   width: 100%;

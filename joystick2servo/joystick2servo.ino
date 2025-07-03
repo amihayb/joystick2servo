@@ -82,11 +82,8 @@ void loop() {
     String outLine = String(parsedValues[0], 2) + "," + String(parsedValues[1], 2) + "," + String(parsedValues[2], 2) + "," + String(parsedValues[3], 2) + "," + String(parsedValues[4], 2) + "," + String(parsedValues[5], 2);
     Serial.println(outLine);
     setServoFromFloat(parsedValues[1]);
-    for (int i = 0; i < 3; i++) {
-      runStepperCommand(stepper[i], parsedValues[0], lastCommand[i], target[i], ENABLE_PIN[i]);
-    }
-    for (int i = 3; i < 6; i++) {
-      runStepperCommand(stepper[i], parsedValues[1], lastCommand[i], target[i], ENABLE_PIN[i]);
+    for (int i = 0; i < 6; i++) {
+      runStepperCommand(stepper[i], parsedValues[i], lastCommand[i], target[i], ENABLE_PIN[i]);
     }
   }
 

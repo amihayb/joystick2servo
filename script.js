@@ -1,6 +1,7 @@
 // ===== GLOBAL VARIABLES =====
 let port, writer, reader;
 let pollInterval = null;
+let motionState = 0;
 
 // Joystick visualization elements
 const leftStickViz = document.querySelector('.stick-left .stick-position');
@@ -80,13 +81,21 @@ async function pollGamepad() {
   // Send data to serial if connected
   if (writer && gamepad) {
     try {
-      const axesStr = gamepad.axes.slice(0, 4).map(v => v.toFixed(2)).join(',');
-      const buttonsStr = gamepad.buttons.map(b => b.pressed ? 1 : 0).join(',');
-      const msg = `${axesStr},${buttonsStr}\n`;
-      console.log(msg);
-      const data = new TextEncoder().encode(msg);
-      
-      await writer.write(data);
+      if (motionState === 0) {
+        const axesStr = gamepad.axes.slice(0, 4).map(v => v.toFixed(2)).join(',');
+        const buttonsStr = gamepad.buttons.map(b => b.pressed ? 1 : 0).join(',');
+        const msg = `${axesStr},${buttonsStr}\n`;
+        const data = new TextEncoder().encode(msg);
+        await writer.write(data);
+      } else if (motionState === 1) {
+        // Use vectorToMotors for both sticks
+        const J0 = vectorToMotors(gamepad.axes[0], gamepad.axes[1]);
+        const J1 = vectorToMotors(gamepad.axes[2], gamepad.axes[3]);
+        // Flatten and format the array
+        const msg = [...J0, ...J1].map(v => v.toFixed(2)).join(',') + '\n';
+        const data = new TextEncoder().encode(msg);
+        await writer.write(data);
+      }
     } catch (err) {
       console.error("Failed to write to serial:", err);
     }
@@ -163,7 +172,47 @@ function about() {
   console.log("About functionality not implemented");
 }
 
-// Initialize display on page load
+// ===== MOTION STATE BUTTON HANDLERS =====
 document.addEventListener('DOMContentLoaded', () => {
   pollGamepad(); // Check for already connected gamepads
+
+  // Add event listeners for motion state buttons
+  const motorsControlBtn = document.querySelector('.sidenav a.button:nth-child(2)');
+  const jointsControlBtn = document.querySelector('.sidenav a.button:nth-child(3)');
+
+  if (motorsControlBtn) {
+    motorsControlBtn.addEventListener('click', () => {
+      motionState = 0;
+      motorsControlBtn.classList.add('active-mode');
+      if (jointsControlBtn) jointsControlBtn.classList.remove('active-mode');
+      console.log('Motors Control pressed, motionState set to 0');
+    });
+  }
+  if (jointsControlBtn) {
+    jointsControlBtn.addEventListener('click', () => {
+      motionState = 1;
+      jointsControlBtn.classList.add('active-mode');
+      if (motorsControlBtn) motorsControlBtn.classList.remove('active-mode');
+      console.log('Joints Control pressed, motionState set to 1');
+    });
+  }
 });
+
+// ===== VECTOR TO MOTOR VALUES FUNCTION =====
+/**
+ * Given (x, y), calculates size (A) and angle (q),
+ * and returns [A*cos(q), A*cos(q+2/3*pi), A*cos(q+4/3*pi)]
+ * @param {number} x
+ * @param {number} y
+ * @returns {[number, number, number]}
+ */
+function vectorToMotors(x, y) {
+  const A = Math.sqrt(x * x + y * y);
+  const q = Math.atan2(y, x);
+  const twoThirdPi = 2 * Math.PI / 3;
+  return [
+    A * Math.cos(q),
+    A * Math.cos(q + twoThirdPi),
+    A * Math.cos(q + 2 * twoThirdPi)
+  ];
+}
