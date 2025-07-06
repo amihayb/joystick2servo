@@ -85,6 +85,12 @@ void loop() {
     for (int i = 0; i < 6; i++) {
       runStepperCommand(stepper[i], parsedValues[i], lastCommand[i], target[i], ENABLE_PIN[i]);
     }
+    // for (int i = 0; i < 3; i++) {
+    //   runStepperCommand(stepper[i+3], parsedValues[i], lastCommand[i], target[i], ENABLE_PIN[i+3]);
+    // }
+    // for (int i = 3; i < 6; i++) {
+    //   runStepperCommand(stepper[i-3], parsedValues[i], lastCommand[i], target[i], ENABLE_PIN[i-3]);
+    // }
   }
 
   // stepper1.runSpeed();

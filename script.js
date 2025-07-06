@@ -92,16 +92,42 @@ async function pollGamepad() {
     try {
       if (motionState === 0) {
         const axesStr = gamepad.axes.slice(0, 4).map(v => v.toFixed(2)).join(',');
-        const buttonsStr = gamepad.buttons.map(b => b.pressed ? 1 : 0).join(',');
-        const msg = `${axesStr},${buttonsStr}\n`;
+        
+        // Custom button logic
+        let buttonsStr = [];
+        // buttonsStr[0]: 1 if button 15, -1 if button 14, 0 if neither
+        if (gamepad.buttons[15] && gamepad.buttons[15].pressed) {
+          buttonsStr.push(1);
+        } else if (gamepad.buttons[14] && gamepad.buttons[14].pressed) {
+          buttonsStr.push(-1);
+        } else {
+          buttonsStr.push(0);
+        }
+        // buttonsStr[1]: 1 if button 13, -1 if button 12, 0 if neither
+        if (gamepad.buttons[13] && gamepad.buttons[13].pressed) {
+          buttonsStr.push(1);
+        } else if (gamepad.buttons[12] && gamepad.buttons[12].pressed) {
+          buttonsStr.push(-1);
+        } else {
+          buttonsStr.push(0);
+        }
+        
+        const msg = `${axesStr},${buttonsStr.join(',')}\n`;
         const data = new TextEncoder().encode(msg);
         await writer.write(data);
       } else if (motionState === 1) {
         // Use vectorToMotors for both sticks
         const J0 = vectorToMotors(gamepad.axes[0], gamepad.axes[1]);
         const J1 = vectorToMotors(gamepad.axes[2], gamepad.axes[3]);
+        
+        // Double J0 and J1 with a sign vector
+        const signVector0 = [1, 1, -1];
+        const signVector1 = [-1, 1, 1];
+        const J0_double = J0.map((v, i) => v * signVector0[i]);
+        const J1_double = J1.map((v, i) => v * signVector1[i]);
+
         // Flatten and format the array
-        const msg = [...J0, ...J1].map(v => v.toFixed(2)).join(',') + '\n';
+        const msg = [...J0_double, ...J1_double].map(v => v.toFixed(2)).join(',') + '\n';
         const data = new TextEncoder().encode(msg);
         await writer.write(data);
       }
@@ -213,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function vectorToMotors(x, y) {
   const A = Math.sqrt(x * x + y * y);
-  const q = Math.atan2(y, x);
+  const q = Math.atan2(x,-y);
   const twoThirdPi = 2 * Math.PI / 3;
   return [
     A * Math.cos(q),
